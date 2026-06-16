@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratorio de Ciberseguridad — Huella Digital &amp; Phishing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D1220;
+    --ink-2:#121933;
+    --panel:#19223D;
+    --line:#2B3760;
+    --paper:#F3ECDA;
+    --paper-2:#E9DFC4;
+    --text:#EAEDF6;
+    --muted:#92A0C2;
+    --amber:#F2A93B;
+    --amber-soft:#3A3220;
+    --cyan:#4FD6C2;
+    --cyan-soft:#163632;
+    --red:#E2535A;
+    --red-soft:#3A1E22;
+    --display:'Space Grotesk',sans-serif;
+    --body:'IBM Plex Sans',sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 28px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 28px);
+    color:var(--text);
+    font-family:var(--body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:880px;margin:0 auto;padding:18px 18px 60px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 16px;border-radius:14px;
+    background:linear-gradient(180deg, var(--panel), var(--ink-2));
+    border:1px solid var(--line);
+    margin-bottom:18px;
+    flex-wrap:wrap;gap:8px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--amber);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-weight:700;color:#1a1404;font-size:15px;
+    flex-shrink:0;
+  }
+  .brand-text{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.2px;}
+  .brand-text span{color:var(--muted);font-weight:500;font-size:12px;display:block;margin-top:-2px;}
+  .hud{display:flex;gap:10px;align-items:center;font-family:var(--mono);font-size:13px;color:var(--muted);}
+  .hud b{color:var(--text);}
+  .pill{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;display:flex;gap:6px;align-items:center;
+  }
+
+  /* ---------- generic ---------- */
+  h1,h2,h3{font-family:var(--display);margin:0;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--amber);margin-bottom:8px;display:block;
+  }
+  .btn{
+    font-family:var(--body);font-weight:600;font-size:14.5px;
+    border:none;border-radius:10px;padding:12px 20px;cursor:pointer;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:scale(.97);}
+  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+  .btn-primary{background:var(--amber);color:#1a1404;}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line);}
+  .btn-cyan{background:var(--cyan);color:#062420;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+
+  /* ---------- HOME ---------- */
+  .home-hero{padding:18px 4px 28px;}
+  .home-hero h1{font-size:clamp(26px,4vw,36px);line-height:1.15;max-width:560px;}
+  .home-hero p{color:var(--muted);max-width:520px;margin-top:10px;font-size:15px;line-height:1.55;}
+  .missions{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;}
+  @media (max-width:640px){.missions{grid-template-columns:1fr;}}
+  .case-file{
+    background:linear-gradient(180deg,var(--panel),var(--ink-2));
+    border:1px solid var(--line);border-radius:16px;padding:22px;
+    position:relative;overflow:hidden;cursor:pointer;
+    transition:transform .18s ease, border-color .18s ease;
+  }
+  .case-file:hover{transform:translateY(-3px);border-color:var(--amber);}
+  .case-file .tag{
+    font-family:var(--mono);font-size:11px;color:var(--ink);
+    background:var(--amber);display:inline-block;padding:3px 8px;border-radius:5px;
+    transform:rotate(-3deg);margin-bottom:14px;letter-spacing:.04em;
+  }
+  .case-file.cyan .tag{background:var(--cyan);}
+  .case-file h2{font-size:21px;margin-bottom:8px;}
+  .case-file p{color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:16px;}
+  .case-file .meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;}
+  .case-file .corner{
+    position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;
+    background:radial-gradient(circle, rgba(242,169,59,0.18), transparent 70%);
+  }
+  .case-file.cyan .corner{background:radial-gradient(circle, rgba(79,214,194,0.18), transparent 70%);}
+
+  /* ---------- mission frame ---------- */
+  .mission-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .mission-head h2{font-size:20px;}
+  .progress-track{
+    height:6px;border-radius:99px;background:var(--ink-2);border:1px solid var(--line);
+    overflow:hidden;margin-top:14px;
+  }
+  .progress-fill{height:100%;background:var(--amber);transition:width .3s ease;}
+  .progress-fill.cyan{background:var(--cyan);}
+
+  /* ---------- evidence card (paper) ---------- */
+  .evidence{
+    background:var(--paper);color:#231f14;border-radius:4px;
+    padding:22px 22px 20px;position:relative;
+    box-shadow:0 18px 34px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.2);
+    transform:rotate(-0.4deg);
+  }
+  .evidence::before{
+    content:"";position:absolute;top:-10px;left:28px;width:46px;height:18px;
+    background:rgba(242,169,59,0.55);transform:rotate(-4deg);border-radius:2px;
+  }
+  .post-card{font-family:var(--body);}
+  .post-head{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--paper-2);border:2px solid #cbbf99;flex-shrink:0;}
+  .post-name{font-weight:600;font-size:14.5px;}
+  .post-time{font-family:var(--mono);font-size:12px;color:#6b6248;}
+  .post-caption{font-size:15px;line-height:1.55;margin:0 0 12px;}
+  .post-photo{
+    background:#dcd3b3;border:1px dashed #b6a978;border-radius:6px;
+    padding:30px 16px;text-align:center;font-family:var(--mono);font-size:13px;color:#54492b;
+    margin-bottom:10px;line-height:1.6;
+  }
+  .post-foot{font-family:var(--mono);font-size:12px;color:#6b6248;display:flex;gap:14px;}
+
+  .clue{
+    cursor:pointer;border-bottom:2px dotted var(--amber-dark, #b07a1a);
+    background:rgba(242,169,59,0.18);padding:1px 3px;border-radius:3px;
+    font-weight:600;position:relative;display:inline-block;
+  }
+  .clue::after{
+    content:"🔍";font-size:11px;margin-left:4px;
+    animation:pulse 1.6s infinite ease-in-out;
+  }
+  .clue.found{background:rgba(79,214,194,0.28);border-bottom-color:#1f8f7e;}
+  .clue.found::after{content:"✓";color:#0e6a5b;animation:none;}
+  @keyframes pulse{0%,100%{opacity:.45;}50%{opacity:1;}}
+  @media (prefers-reduced-motion:reduce){.clue::after{animation:none;}}
+
+  .explain-box{
+    margin-top:8px;padding:12px 14px;border-radius:8px;
+    background:#fff7e6;border:1px solid #d9c389;font-size:13.5px;line-height:1.5;
+    color:#3a2f12;
+  }
+  .explain-box b{color:#8a4b00;}
+
+  .clue-tally{
+    font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:14px;
+    display:flex;gap:8px;align-items:center;
+  }
+
+  /* ---------- stamp ---------- */
+  .stamp-wrap{display:flex;justify-content:center;margin:18px 0 4px;}
+  .stamp{
+    font-family:var(--display);font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;font-size:15px;padding:10px 22px;border-radius:8px;
+    border:3px solid currentColor;display:inline-block;
+    transform:rotate(-7deg) scale(1);
+    animation:stampDown .35s cubic-bezier(.2,1.6,.4,1);
+    background:rgba(255,255,255,0.03);
+  }
+  @keyframes stampDown{0%{transform:rotate(-7deg) scale(2.4);opacity:0;}100%{transform:rotate(-7deg) scale(1);opacity:1;}}
+  @media (prefers-reduced-motion:reduce){.stamp{animation:none;}}
+  .stamp.risk-alto{color:var(--red);}
+  .stamp.risk-medio{color:var(--amber);}
+  .stamp.safe{color:var(--cyan);}
+
+  .verdict-text{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:16px 18px;margin-top:14px;font-size:14.5px;line-height:1.6;color:var(--text);
+  }
+  .verdict-text b{color:var(--amber);}
+
+  /* ---------- mission 2: message cards ---------- */
+  .msg-card{font-family:var(--body);}
+  .msg-field{font-family:var(--mono);font-size:12.5px;color:#5d543a;margin-bottom:4px;}
+  .msg-field b{color:#231f14;}
+  .msg-divider{border:none;border-top:1px dashed #b6a978;margin:10px 0 12px;}
+  .msg-body{font-size:14.5px;line-height:1.6;}
+  .msg-link{
+    display:inline-block;margin-top:10px;font-family:var(--mono);font-size:12.5px;
+    background:#e7ddc0;padding:6px 10px;border-radius:5px;color:#3a3318;
+  }
+  .chat-bubble{
+    background:#dcf2e3;border-radius:10px 10px 10px 2px;padding:12px 14px;
+    max-width:88%;font-size:14.5px;line-height:1.55;position:relative;
+  }
+  .voice-row{display:flex;align-items:center;gap:10px;background:#dcf2e3;border-radius:14px;padding:10px 14px;max-width:88%;}
+  .play-btn{
+    width:34px;height:34px;border-radius:50%;background:#1f8f7e;color:#fff;border:none;
+    font-size:14px;cursor:pointer;flex-shrink:0;
+  }
+  .wave{display:flex;gap:2px;align-items:center;flex:1;}
+  .wave span{width:3px;background:#1f8f7e;border-radius:2px;opacity:.6;}
+  .qr-physical{
+    text-align:center;padding:18px;background:#e9e4d2;border:1px solid #c9bf9d;border-radius:8px;
+  }
+  .qr-code{
+    width:96px;height:96px;margin:0 auto 10px;
+    background:repeating-conic-gradient(#231f14 0% 25%, transparent 0% 50%) ;
+    background-size: 16px 16px;
+    border:6px solid #fff;transform:rotate(-2deg);
+    box-shadow:0 4px 10px rgba(0,0,0,.25);
+  }
+  .qr-caption{font-family:var(--mono);font-size:12.5px;color:#5d543a;}
+
+  .answer-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+  .answer-btn{
+    flex:1;min-width:160px;padding:14px 16px;border-radius:10px;border:2px solid var(--line);
+    background:var(--panel);color:var(--text);font-family:var(--display);font-weight:600;font-size:14.5px;
+    cursor:pointer;transition:.15s ease;
+  }
+  .answer-btn:hover{border-color:var(--amber);}
+  .answer-btn:disabled{opacity:.55;cursor:default;}
+  .answer-btn.chosen-real{border-color:var(--cyan);background:var(--cyan-soft);}
+  .answer-btn.chosen-phish{border-color:var(--red);background:var(--red-soft);}
+
+  .flags-list{margin-top:12px;padding:0;list-style:none;}
+  .flags-list li{
+    font-size:13.5px;line-height:1.5;padding:8px 10px;margin-bottom:6px;border-radius:6px;
+    background:var(--ink-2);border-left:3px solid var(--amber);color:var(--text);
+  }
+  .result-banner{
+    font-family:var(--mono);font-size:13px;padding:8px 12px;border-radius:8px;display:inline-block;margin-bottom:6px;
+  }
+  .result-banner.ok{background:var(--cyan-soft);color:var(--cyan);}
+  .result-banner.bad{background:var(--red-soft);color:var(--red);}
+
+  /* ---------- end screen ---------- */
+  .end-card{
+    background:linear-gradient(180deg,var(--panel),var(--ink-2));border:1px solid var(--line);
+    border-radius:16px;padding:32px;text-align:center;
+  }
+  .end-score{font-family:var(--display);font-size:46px;color:var(--amber);}
+  .rank{font-family:var(--mono);font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
+  .checklist{text-align:left;max-width:480px;margin:22px auto 0;font-size:14.5px;line-height:1.7;color:var(--text);}
+  .checklist div{margin-bottom:8px;}
+
+  footer.credit{text-align:center;color:var(--muted);font-family:var(--mono);font-size:11.5px;margin-top:30px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand" id="goHome">
+      <div class="brand-mark">CD</div>
+      <div class="brand-text">Laboratorio de Ciberseguridad<span>Ciudadanía Digital y Seguridad</span></div>
+    </div>
+    <div class="hud" id="hud"></div>
+  </div>
+  <main id="screen"></main>
+  <footer class="credit">Material complementario para la clase de Ciudadanía Digital — uso libre en el aula.</footer>
+</div>
+
+<script>
+/* ================= STATE ================= */
+const state = {
+  screen: 'home',
+  m1: { idx: 0, score: 0, found: new Set() },
+  m2: { idx: 0, score: 0, streak: 0, answered: false }
+};
+
+/* ================= DATA: MISSION 1 — HUELLA DIGITAL ================= */
+const CASES1 = [
+  {
+    title: "La previa de esta noche",
+    name: "@valenh_", time: "Hace 1 hora",
+    caption: 'Previa en <span class="clue" data-id="c0-amigo" data-explain="Mencionar a una persona y su casa expone también los datos de un tercero que no decidió aparecer en tu publicación: ahora cualquiera sabe en qué zona vive Bruno.">casa de Bruno</span>, después al show de Bandalos Chinos 🎶',
+    photo: '<span class="clue" data-id="c0-loc" data-explain="Esto dice exactamente dónde van a estar y por cuánto tiempo la casa de Bruno (o la tuya) va a quedar vacía: el dato perfecto para planear un robo domiciliario.">📍 Microestadio Malvinas Argentinas · publicado hace 1 hora</span>',
+    foot: '❤ 41 · <span class="clue" data-id="c0-vis" data-explain="El ícono de "Público" significa que no solo lo ven tus amigos: lo puede ver cualquier persona, sin que lo sepas, sin que te siga.">👁 Visible para: Público</span>',
+    clueIds: ["c0-amigo","c0-loc","c0-vis"],
+    verdict: "Entre las pistas armaste un mapa completo: con quién está, dónde va a estar y cuánto tiempo esa casa va a quedar sola. Esto se llama <b>huella digital activa</b>: información que la persona publicó por su cuenta, sin pensar en quién más la puede leer.",
+    risk: "alto"
+  },
+  {
+    title: "¡Hogar, dulce hogar!",
+    name: "@nacho.suarez", time: "Hace 30 minutos",
+    caption: '¡Por fin nuestro hogar! 🏠✨',
+    photo: '<span class="clue" data-id="c1-calle" data-explain="El cartel de la calle que quedó de fondo en la foto, sin querer, muestra la dirección exacta. No hace falta etiquetar la ubicación: el dato ya está ahí.">[ foto de la fachada — al fondo se lee "Av. Carabobo 1458" ]</span>',
+    foot: '❤ 58 · 💬 <span class="clue" data-id="c1-coment" data-explain="Un comentario público como "¡Que la disfruten en Carabobo!" repite el dato y lo hace todavía más fácil de encontrar para cualquiera que mire los comentarios.">"¡Que la disfruten en Carabobo!"</span> · <span class="clue" data-id="c1-mudanza" data-explain="Que la mudanza sea reciente sugiere que la casa puede no tener todavía alarma, cámaras o rejas instaladas: una rutina de seguridad que recién empieza a armarse.">Hace 30 minutos</span>',
+    clueIds: ["c1-calle","c1-coment","c1-mudanza"],
+    verdict: "El domicilio quedó expuesto sin que nadie lo haya escrito directamente: lo dedujiste de un cartel de fondo y de un comentario. Esto pasa todo el tiempo con detalles de fondo que nadie revisa antes de publicar.",
+    risk: "alto"
+  },
+  {
+    title: "Un corazón roto",
+    name: "Perfil público", time: "Hace 4 horas",
+    caption: '<span class="clue" data-id="c2-texto" data-explain="Un estado emocional vulnerable, publicado en abierto, es justo lo que buscan quienes hacen estafas afectivas o intentan ganarse la confianza de alguien que está mal: aprovechan el bajón para acercarse.">"Nati, no me dejes. Estoy destrozado 💔"</span>',
+    photo: '<span class="clue" data-id="c2-nati" data-explain="Mencionar a "Nati" expone el nombre de otra persona en un conflicto privado, sin que ella haya decidido que esa información se haga pública.">Se nombra a una tercera persona ajena a la publicación</span>',
+    foot: '👁 <span class="clue" data-id="c2-vis" data-explain="Configurado como "Público" + comentarios abiertos significa que cualquier desconocido puede escribirle en su peor momento, no solo sus amigos.">Visible para: Público · 6 comentarios</span>',
+    clueIds: ["c2-texto","c2-nati","c2-vis"],
+    verdict: "Acá el dato sensible no es un lugar: es un estado emocional expuesto a cualquiera. Quienes buscan manipular o estafar suelen elegir justamente publicaciones así.",
+    risk: "medio"
+  },
+  {
+    title: "Rutina de las 7 AM",
+    name: "@fede_training", time: "Publicado lunes, miércoles y viernes a las 7:05",
+    caption: 'Arrancando el día 💪 #RutinaFit',
+    photo: '<span class="clue" data-id="c3-horario" data-explain="Que se repita el mismo lugar y el mismo horario, varias veces por semana, construye un patrón de rutina: alguien podría calcular con bastante precisión cuándo la casa va a estar vacía.">Mismo horario, 3 veces por semana, durante meses</span>',
+    foot: '📍 <span class="clue" data-id="c3-gym" data-explain="La ubicación geoetiquetada del gimnasio confirma la zona exacta donde vive o trabaja la persona, sumada al patrón horario.">Gimnasio PowerClub — geoetiquetado</span> · <span class="clue" data-id="c3-tag" data-explain="Etiquetar a amigos del gimnasio revela parte de su red de contactos cercana: información útil para hacerse pasar por un conocido en común.">3 amigos etiquetados</span>',
+    clueIds: ["c3-horario","c3-gym","c3-tag"],
+    verdict: "Un solo posteo dice poco. Pero la repetición de un patrón —mismo lugar, mismo horario, semana tras semana— construye un mapa de rutina mucho más peligroso que cualquier dato suelto.",
+    risk: "medio"
+  },
+  {
+    title: "¡Nos vamos de vacaciones!",
+    name: "@martu.deviaje", time: "Hace 10 minutos",
+    caption: '¡Nos vamos 2 semanas! ✈️🌴 <span class="clue" data-id="c4-tiempo" data-explain="Avisar que vas a estar 2 semanas fuera es decirle a cualquiera, con fecha exacta, cuándo tu casa va a quedar desprotegida por mucho tiempo.">Recién hicimos el check-in</span>',
+    photo: '<span class="clue" data-id="c4-ticket" data-explain="El código de reserva de un pasaje no es decorativo: con ese código se puede acceder a los datos completos de la reserva en el sitio de la aerolínea, incluyendo a veces datos del pasajero.">[ foto de la tarjeta de embarque, con el código de reserva visible ]</span>',
+    foot: '📍 <span class="clue" data-id="c4-geo" data-explain="La geolocalización en tiempo real desde el aeropuerto confirma que ya se fueron: no es una intención a futuro, es una ausencia confirmada ahora mismo.">Aeropuerto — ubicación en tiempo real</span>',
+    clueIds: ["c4-tiempo","c4-ticket","c4-geo"],
+    verdict: "Sumaste tres datos que solos parecen inofensivos pero juntos son un mapa perfecto: cuánto tiempo va a estar vacía la casa, desde cuándo, y datos de un documento de viaje que debería ser privado.",
+    risk: "alto"
+  }
+];
+
+/* ================= DATA: MISSION 2 — PHISHING ================= */
+const CASES2 = [
+  {
+    channel:"email",
+    from:"ARCA Notificaciones &lt;revisiones.pendientes960@gmail.com&gt;",
+    subject:"Tiene una deuda pendiente por fiscalización",
+    body:"Hemos detectado una deuda originada en una fiscalización. Para evitar el embargo de su cuenta, regularice la situación dentro de las próximas 48 horas ingresando su Clave Fiscal en el siguiente enlace.",
+    link:"arca-tramites-urgentes.com/regularizar",
+    answer:"phishing",
+    flags:[
+      "El remitente real es una cuenta @gmail.com, no el dominio oficial @arca.gob.ar.",
+      "Pide la Clave Fiscal por correo: un organismo público nunca solicita esa clave así.",
+      "Genera urgencia artificial con una amenaza de embargo en 48 horas.",
+      "Firma con un área que no existe ('Revisiones Pendientes 960'); las comunicaciones oficiales no se firman así."
+    ],
+    note:"Este patrón es real: ARCA (el organismo que reemplazó a AFIP) confirmó campañas de phishing como esta y pide reenviar estos correos a phishing@arca.gob.ar."
+  },
+  {
+    channel:"sms",
+    from:"Mensaje de texto — número desconocido",
+    body:"Correo Argentino: tu envío tiene un problema con el código postal. Actualizá tus datos en correoargentino-envios-ar.com para no perder el paquete.",
+    answer:"phishing",
+    flags:[
+      "El dominio no es el oficial de Correo Argentino (correoargentino.com.ar).",
+      "Pide actualizar datos personales a través de un link recibido por SMS.",
+      "Correo Argentino aclaró públicamente que nunca solicita información sensible por mensaje de texto."
+    ],
+    note:"Esta modalidad de SMS sobre 'problemas con el envío' fue alertada de forma oficial por Correo Argentino como una de las estafas más frecuentes."
+  },
+  {
+    channel:"audio",
+    from:"Audio de WhatsApp — contacto guardado como “Hijo ❤️”",
+    transcript:"“Mamá, tuve un problema, necesito que me hagas una transferencia urgente ahora. Después te explico todo, no le digas a nadie todavía.”",
+    answer:"phishing",
+    flags:[
+      "Combina urgencia + secreto ('no le digas a nadie'): la combinación clásica de la ingeniería social.",
+      "Pide dinero por un canal inusual (audio) en vez de una llamada o videollamada.",
+      "Con apenas unos segundos de audio público (una historia, un video) hoy se puede clonar una voz con inteligencia artificial."
+    ],
+    note:"Ya hubo casos reales en Argentina de audios de voz clonada por WhatsApp haciéndose pasar por un familiar o conocido para pedir dinero con urgencia. La defensa más efectiva es colgar y volver a llamar directamente al número conocido de la persona, o tener una palabra clave familiar pactada de antemano."
+  },
+  {
+    channel:"email",
+    from:"Mercado Pago &lt;notificaciones@mercadopago.com.ar&gt;",
+    subject:"Tu resumen de cuenta de mayo ya está disponible",
+    body:"Hola. Tu resumen de cuenta del mes de mayo ya está disponible para consultar desde la app o el sitio web. No necesitás hacer nada por ahora.",
+    link:"mercadopago.com.ar/resumen",
+    answer:"real",
+    flags:[
+      "El dominio del remitente y del enlace coinciden exactamente con el sitio oficial.",
+      "No pide contraseñas, claves ni dinero.",
+      "No genera ninguna urgencia ni amenaza: es solo un aviso informativo."
+    ],
+    note:"Este es un ejemplo de comunicación legítima, para comparar: la diferencia no está en lo prolijo que se vea, sino en lo que pide y en el dominio real."
+  },
+  {
+    channel:"qr",
+    caption:"Cartel pegado sobre un parquímetro: “Pagá tu estacionamiento escaneando este código”. El código QR está pegado con cinta, ligeramente torcido, encima del cartel oficial.",
+    answer:"phishing",
+    flags:[
+      "El QR está pegado por encima del cartel oficial: una señal física de manipulación.",
+      "No hay forma de saber a dónde lleva el enlace antes de escanearlo.",
+      "Los sistemas oficiales de pago no suelen depender de un cartel suelto con un código pegado."
+    ],
+    note:"Esta modalidad se conoce como 'quishing' (phishing por código QR) y creció mucho en estacionamientos, restaurantes y vía pública."
+  },
+  {
+    channel:"email",
+    from:"Soporte Banco &lt;soporte@bancogalicia-verificacion.net&gt;",
+    subject:"Detectamos un acceso inusual en tu cuenta",
+    body:"Hemos detectado un acceso inusual en tu cuenta. Para tu seguridad, verificá tu identidad ingresando al siguiente enlace y confirmá tus datos antes de que tu cuenta sea suspendida.",
+    link:"bancogalicia-verificacion.net/seguridad",
+    answer:"phishing",
+    flags:[
+      "El texto está perfectamente escrito, sin errores: hoy la inteligencia artificial redacta este tipo de mensajes sin las fallas de ortografía de antes.",
+      "El dominio no es el del banco real: agrega palabras como 'verificacion' y termina en .net.",
+      "Pide 'verificar identidad' bajo amenaza de suspensión: presión + urgencia."
+    ],
+    note:"Dato clave para 2026: ya no podés confiar en que 'si está bien escrito, es real'. Hay que mirar el dominio y lo que se pide, no la ortografía."
+  }
+];
+
+/* ================= HELPERS ================= */
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+function screenEl(){ return document.getElementById('screen'); }
+function hudEl(){ return document.getElementById('hud'); }
+
+function speak(text){
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'es-AR';
+    u.rate = 0.98;
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* speech synthesis no disponible */ }
+}
+
+/* ================= RENDER: HOME ================= */
+function renderHome(){
+  hudEl().innerHTML = '';
+  screenEl().innerHTML = `
+    <div class="home-hero">
+      <span class="eyebrow">Misión de campo · Ciudadanía digital</span>
+      <h1>Vos sos el/la investigador/a. Encontrá lo que se esconde detrás de cada publicación y cada mensaje.</h1>
+      <p>Dos casos para resolver. En el primero buscás datos expuestos en redes sociales. En el segundo, tenés que decidir si un mensaje es real o un intento de estafa. Elegí por dónde empezar.</p>
+    </div>
+    <div class="missions">
+      <div class="case-file" id="card1">
+        <div class="corner"></div>
+        <span class="tag">Misión 01</span>
+        <h2>Huella Digital</h2>
+        <p>5 publicaciones reales de redes sociales. Tocá las pistas resaltadas para descubrir qué información sensible están revelando sin darse cuenta.</p>
+        <div class="meta"><span>🔍 5 casos</span><span>🧩 hasta 150 pts</span></div>
+      </div>
+      <div class="case-file cyan" id="card2">
+        <div class="corner"></div>
+        <span class="tag">Misión 02</span>
+        <h2>Phishing: ¿Real o falso?</h2>
+        <p>6 mensajes — emails, SMS, un audio y hasta un cartel con QR. Decidí si son reales o si son un intento de estafa, y por qué.</p>
+        <div class="meta"><span>🎯 6 rondas</span><span>🧩 hasta 90 pts</span></div>
+      </div>
+    </div>
+  `;
+  document.getElementById('card1').onclick = () => startMission1();
+  document.getElementById('card2').onclick = () => startMission2();
+}
+
+/* ================= MISSION 1 ================= */
+function startMission1(){
+  state.m1 = { idx:0, score:0, found:new Set() };
+  state.screen = 'm1';
+  renderM1();
+}
+
+function renderM1(){
+  const c = CASES1[state.m1.idx];
+  const total = c.clueIds.length;
+  const foundCount = c.clueIds.filter(id=>state.m1.found.has(id)).length;
+  const allFound = foundCount === total;
+
+  hudEl().innerHTML = `
+    <div class="pill">Caso <b>${state.m1.idx+1}/${CASES1.length}</b></div>
+    <div class="pill">🧩 <b>${state.m1.score}</b> pts</div>
+  `;
+
+  screenEl().innerHTML = `
+    <div class="mission-head">
+      <h2>Misión 1 · Huella Digital</h2>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${(state.m1.idx)/CASES1.length*100}%"></div></div>
+
+    <div style="margin-top:22px;" class="evidence">
+      <div class="post-card">
+        <div class="post-head">
+          <div class="avatar"></div>
+          <div>
+            <div class="post-name">${c.title}</div>
+            <div class="post-time">${c.name} · ${c.time}</div>
+          </div>
+        </div>
+        <p class="post-caption">${c.caption}</p>
+        <div class="post-photo">${c.photo}</div>
+        <div class="post-foot">${c.foot}</div>
+      </div>
+      <div id="explainArea"></div>
+    </div>
+
+    <div class="clue-tally">🔍 Pistas encontradas: ${foundCount}/${total}</div>
+
+    <div id="verdictArea"></div>
+
+    <div class="btn-row">
+      ${allFound ? `<button class="btn btn-primary" id="verdictBtn">Ver dictamen del caso</button>` : ``}
+    </div>
+  `;
+
+  // attach clue listeners
+  screenEl().querySelectorAll('.clue').forEach(span=>{
+    if(state.m1.found.has(span.dataset.id)) span.classList.add('found');
+    span.onclick = ()=>{
+      if(!state.m1.found.has(span.dataset.id)){
+        state.m1.found.add(span.dataset.id);
+        state.m1.score += 10;
+      }
+      const box = el(`<div class="explain-box"><b>Pista detectada.</b> ${span.dataset.explain}</div>`);
+      const area = document.getElementById('explainArea');
+      area.innerHTML = '';
+      area.appendChild(box);
+      renderM1();
+    };
+  });
+
+  const vb = document.getElementById('verdictBtn');
+  if(vb){
+    vb.onclick = ()=>{
+      const area = document.getElementById('verdictArea');
+      area.innerHTML = `
+        <div class="stamp-wrap"><span class="stamp risk-${c.risk}">${c.risk==='alto' ? 'Riesgo alto' : 'Riesgo medio'}</span></div>
+        <div class="verdict-text">${c.verdict}</div>
+        <div class="btn-row"><button class="btn btn-primary" id="nextCaseBtn">${state.m1.idx < CASES1.length-1 ? 'Siguiente caso →' : 'Ver resultado final →'}</button></div>
+      `;
+      document.getElementById('nextCaseBtn').onclick = ()=>{
+        if(state.m1.idx < CASES1.length-1){
+          state.m1.idx++;
+          renderM1();
+        } else {
+          renderEnd1();
+        }
+      };
+      vb.remove();
+    };
+  }
+}
+
+function renderEnd1(){
+  state.screen = 'end1';
+  hudEl().innerHTML = `<div class="pill">🧩 <b>${state.m1.score}</b> / 150 pts</div>`;
+  let rank = 'Observador/a';
+  if(state.m1.score >= 150) rank = 'Detective Senior de Huella Digital';
+  else if(state.m1.score >= 90) rank = 'Detective Digital';
+  screenEl().innerHTML = `
+    <div class="end-card">
+      <span class="eyebrow">Misión 1 completa</span>
+      <div class="end-score">${state.m1.score} pts</div>
+      <div class="rank">${rank}</div>
+      <div class="checklist">
+        <div>🧠 <b>Huella activa</b> es lo que publicás vos mismo/a: textos, fotos, ubicaciones.</div>
+        <div>👀 <b>Huella pasiva</b> es la que generan otros: etiquetas, comentarios, metadatos de tus fotos.</div>
+        <div>🤖 Dato 2026: con solo unos segundos de un video o un audio público, hoy se puede clonar tu cara o tu voz con inteligencia artificial. Cuanto más material público tuyo circula, más fácil es construir un engaño creíble con tu identidad.</div>
+        <div>🔒 Revisá la configuración de privacidad de tus redes al menos una vez al mes: los valores por defecto casi nunca son los más restrictivos.</div>
+      </div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn btn-primary" id="toM2">Ir a la Misión 2: Phishing →</button>
+        <button class="btn btn-ghost" id="toHome">Volver al menú</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('toM2').onclick = ()=> startMission2();
+  document.getElementById('toHome').onclick = ()=> { state.screen='home'; renderHome(); };
+}
+
+/* ================= MISSION 2 ================= */
+function startMission2(){
+  state.m2 = { idx:0, score:0, streak:0, answered:false };
+  state.screen = 'm2';
+  renderM2();
+}
+
+function messageMarkup(c){
+  if(c.channel === 'email'){
+    return `
+      <div class="msg-card">
+        <div class="msg-field"><b>De:</b> ${c.from}</div>
+        <div class="msg-field"><b>Asunto:</b> ${c.subject}</div>
+        <hr class="msg-divider">
+        <div class="msg-body">${c.body}</div>
+        ${c.link ? `<div class="msg-link">🔗 ${c.link}</div>` : ''}
+      </div>`;
+  }
+  if(c.channel === 'sms'){
+    return `
+      <div class="msg-card">
+        <div class="msg-field"><b>${c.from}</b></div>
+        <div class="chat-bubble">${c.body}</div>
+      </div>`;
+  }
+  if(c.channel === 'audio'){
+    return `
+      <div class="msg-card">
+        <div class="msg-field"><b>${c.from}</b></div>
+        <div class="voice-row">
+          <button class="play-btn" id="playAudio">▶</button>
+          <div class="wave">${Array.from({length:18}).map((_,i)=>`<span style="height:${8+ (i%5)*4}px"></span>`).join('')}</div>
+          <span style="font-family:var(--mono);font-size:12px;color:#3a3318;">0:07</span>
+        </div>
+        <p style="font-style:italic;font-size:13.5px;color:#4a4226;margin-top:10px;">${c.transcript}</p>
+      </div>`;
+  }
+  if(c.channel === 'qr'){
+    return `
+      <div class="msg-card">
+        <div class="qr-physical">
+          <div class="qr-code"></div>
+          <div class="qr-caption">${c.caption}</div>
+        </div>
+      </div>`;
+  }
+  return '';
+}
+
+function renderM2(){
+  const c = CASES2[state.m2.idx];
+  hudEl().innerHTML = `
+    <div class="pill">Mensaje <b>${state.m2.idx+1}/${CASES2.length}</b></div>
+    <div class="pill">🧩 <b>${state.m2.score}</b> pts</div>
+    ${state.m2.streak >= 2 ? `<div class="pill">🔥 <b>${state.m2.streak}</b></div>` : ''}
+  `;
+
+  screenEl().innerHTML = `
+    <div class="mission-head">
+      <h2>Misión 2 · Phishing: ¿real o falso?</h2>
+    </div>
+    <div class="progress-track"><div class="progress-fill cyan" style="width:${(state.m2.idx)/CASES2.length*100}%"></div></div>
+
+    <div style="margin-top:22px;" class="evidence">
+      ${messageMarkup(c)}
+    </div>
+
+    <div class="answer-row" id="answerRow">
+      <button class="answer-btn" id="btnReal">✅ Es real</button>
+      <button class="answer-btn" id="btnPhish">🎯 Es phishing</button>
+    </div>
+
+    <div id="resultArea"></div>
+  `;
+
+  const playBtn = document.getElementById('playAudio');
+  if(playBtn){ playBtn.onclick = ()=> speak(c.transcript.replace(/[""]/g,'')); }
+
+  document.getElementById('btnReal').onclick = ()=> answerM2('real');
+  document.getElementById('btnPhish').onclick = ()=> answerM2('phishing');
+}
+
+function answerM2(choice){
+  const c = CASES2[state.m2.idx];
+  const correct = choice === c.answer;
+  document.getElementById('btnReal').disabled = true;
+  document.getElementById('btnPhish').disabled = true;
+  document.getElementById(choice==='real' ? 'btnReal' : 'btnPhish').classList.add(choice==='real' ? 'chosen-real' : 'chosen-phish');
+
+  if(correct){ state.m2.score += 15; state.m2.streak += 1; }
+  else { state.m2.streak = 0; }
+
+  const stampClass = c.answer === 'phishing' ? 'risk-alto' : 'safe';
+  const stampLabel = c.answer === 'phishing' ? 'Phishing confirmado' : 'Mensaje legítimo';
+
+  document.getElementById('resultArea').innerHTML = `
+    <div class="result-banner ${correct ? 'ok' : 'bad'}">${correct ? '✅ ¡Correcto!' : '❌ No era lo que pensabas'}</div>
+    <div class="stamp-wrap"><span class="stamp ${stampClass}">${stampLabel}</span></div>
+    <ul class="flags-list">${c.flags.map(f=>`<li>${f}</li>`).join('')}</ul>
+    <div class="verdict-text">💡 ${c.note}</div>
+    <div class="btn-row"><button class="btn btn-cyan" id="nextM2">${state.m2.idx < CASES2.length-1 ? 'Siguiente mensaje →' : 'Ver resultado final →'}</button></div>
+  `;
+  document.getElementById('nextM2').onclick = ()=>{
+    if(state.m2.idx < CASES2.length-1){ state.m2.idx++; renderM2(); }
+    else { renderEnd2(); }
+  };
+}
+
+function renderEnd2(){
+  state.screen = 'end2';
+  hudEl().innerHTML = `<div class="pill">🧩 <b>${state.m2.score}</b> / 90 pts</div>`;
+  let rank = 'Aprendiz anti-phishing';
+  if(state.m2.score >= 90) rank = 'Agente experto/a anti-phishing';
+  else if(state.m2.score >= 60) rank = 'Analista anti-phishing';
+  screenEl().innerHTML = `
+    <div class="end-card">
+      <span class="eyebrow">Misión 2 completa</span>
+      <div class="end-score">${state.m2.score} pts</div>
+      <div class="rank">${rank}</div>
+      <div class="checklist">
+        <div>✍️ Ya no alcanza con mirar la ortografía: hoy la inteligencia artificial redacta mensajes de estafa perfectamente escritos.</div>
+        <div>🔗 Mirá siempre el dominio real, no el nombre que aparece arriba del mensaje.</div>
+        <div>📞 Ante un pedido de dinero urgente — aunque sea con la voz de alguien conocido — colgá y volvé a llamar por el canal habitual, o usá una palabra clave familiar pactada de antemano.</div>
+        <div>🚩 Si recibís un correo sospechoso de un organismo público en Argentina, podés reenviarlo a <b>phishing@arca.gob.ar</b> para que lo analicen.</div>
+      </div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn btn-primary" id="toM1">Ir a la Misión 1: Huella Digital →</button>
+        <button class="btn btn-ghost" id="toHome2">Volver al menú</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('toM1').onclick = ()=> startMission1();
+  document.getElementById('toHome2').onclick = ()=> { state.screen='home'; renderHome(); };
+}
+
+/* ================= INIT ================= */
+document.getElementById('goHome').onclick = ()=> { state.screen='home'; renderHome(); };
+renderHome();
+</script>
+</body>
+</html>
